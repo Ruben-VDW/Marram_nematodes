@@ -1,7 +1,7 @@
 # Marram_nematodes
 This script and data set are used to run the (JSDM) analysis in the paper 'The functional composition of dune nematode communities is structured by both biogeographic region and the local marram grass environment' by Van De Walle et al., 2023, EJSB (in progress).
 
-**Explanation of the columns of the data set:**  
+**Explanation of the columns in the data set:**  
 country: the country where the samples were taken. BE = Belgium, FR = France, NL = the Netherlands, UK = the United Kingdom.  
 Site: the number of the sampled site. Numbers start from 0 for all different countries.  
 Bact_S: The number of bactivorous nematodes found in one gram of soil/sand.  
