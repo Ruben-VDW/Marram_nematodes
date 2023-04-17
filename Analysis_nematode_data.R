@@ -1,8 +1,5 @@
 # Script to analyse nematode functional group data from marram grass
 # Made by Ruben Van De Walle
-
-# Part one: selecting environmental variables 
-#  best explaining the variation within the data
 ################################################
 
 ## Load packages
@@ -16,8 +13,7 @@ library(ggforce)
 library(ggExtra)
 library(corrplot)
 
-#setwd("~")
-setwd("~/ENDURE/Results/Biodiveristy/Soil community/uploaden")
+setwd("~")
 
 ## importing data
 nematodes <- read.csv("marram_grass_nematodes_data.csv")
@@ -457,7 +453,7 @@ computeWAIC(soil.jsdm)
 
 
 
-## 3.2 Results
+## 2.3 Results
 # Prevalence
 prev <- data.frame(P = colMeans(Y), species = colnames(Y))
 prev <- prev %>% arrange(desc(P))
