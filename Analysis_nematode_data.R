@@ -3,6 +3,7 @@
 ################################################
 
 ## Load packages
+library(plyr)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
@@ -12,6 +13,7 @@ library(mcmcplots)
 library(ggforce)
 library(ggExtra)
 library(corrplot)
+library(ggpattern)
 
 setwd("~")
 
@@ -28,11 +30,28 @@ nematodes$district <- factor(nematodes$district)
 
 # nematodes found in roots
 Pgraphs <- nematodes
-Pgraphs <- subset(Pgraphs, select=c(country, site, Bact_R, Fung_R, Plant_R, Omn_R, Pred_R, Unk_R)) %>%
-  pivot_longer(., cols = c(Bact_R, Fung_R, Plant_R, Omn_R, Pred_R, Unk_R), names_to = "niche", values_to = "Count")
+Pgraphs <- subset(Pgraphs, select=c(country, site, Bact_R, Fung_R, Plant_R, Omn_R, Pred_R)) %>%
+  pivot_longer(., cols = c(Bact_R, Fung_R, Plant_R, Omn_R, Pred_R), names_to = "niche", values_to = "Count")
+Pgraphs$count.log <- log(Pgraphs$Count+1)
 
-p <- ggplot(Pgraphs, aes(x=niche, y=Count, fill = niche)) + 
-  geom_boxplot() + theme_classic() +
+# calculating error bars
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+df_sd <- data_summary(Pgraphs, varname="count.log", groupnames = "niche")
+
+p <- ggplot(df_sd, aes(x=niche, y=count.log, fill = niche)) + #
+  geom_bar(stat="identity") + theme_classic() +
+  geom_errorbar(aes(ymin=count.log-sd, ymax=count.log+sd), width=.2) +
   labs(x="", y = "Nematodes per g dry roots") +
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=16,face="bold"),
@@ -40,17 +59,18 @@ p <- ggplot(Pgraphs, aes(x=niche, y=Count, fill = niche)) +
         axis.ticks.length = unit(5, "pt"),
         axis.title.y = element_text(margin = margin(t = 0, r = 15, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0)),
-        legend.position="none") #+ ylim(c(0,1000))
-p + geom_hline(yintercept=1000, linetype="dashed")
-
+        legend.position="none")
+p
 
 # nematodes found in soil
-Pgraphs <- subset(nematodes_no_NA, select=c(country, site, Bact_S, Fung_S, Plant_S, Omn_S, Pred_S, Unk_S)) %>%
-  pivot_longer(., cols = c(Bact_S, Fung_S, Plant_S, Omn_S, Pred_S, Unk_S), names_to = "niche", values_to = "Count")
+Pgraphs <- subset(nematodes, select=c(country, site, Bact_S, Fung_S, Plant_S, Omn_S, Pred_S)) %>%
+  pivot_longer(., cols = c(Bact_S, Fung_S, Plant_S, Omn_S, Pred_S), names_to = "niche", values_to = "Count")
+Pgraphs$count.log <- log(Pgraphs$Count+1)
+df_sd <- data_summary(Pgraphs, varname="count.log", groupnames = "niche")
 
-
-p2 <- ggplot(Pgraphs, aes(x=niche, y=Count, fill = niche)) + 
-  geom_boxplot() + theme_classic() + 
+p2 <- ggplot(df_sd, aes(x=niche, y=count.log, fill = niche)) +
+  geom_bar(stat="identity") + theme_classic() +
+  geom_errorbar(aes(ymin=count.log-sd, ymax=count.log+sd), width=.2) +
   labs(x="", y = "Nematodes per g dry soil") +
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=16,face="bold"),
@@ -58,37 +78,43 @@ p2 <- ggplot(Pgraphs, aes(x=niche, y=Count, fill = niche)) +
         axis.ticks.length = unit(5, "pt"),
         axis.title.y = element_text(margin = margin(t = 0, r = 15, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0)),
-        legend.position="none") #+ ylim(c(0,10))
-p2 + geom_hline(yintercept=10, linetype="dashed")
-
+        legend.position="none")
+p2
 
 # Nematodes in roots per biogeographic region
 Pgraphs <- nematodes
-p3 <- ggplot(Pgraphs, aes(x=district, y=Total_R, fill = district)) +
-  geom_boxplot() + theme_classic() +
-  labs(x="", y = "Nematodes per g dry roots") +
+Pgraphs$count.log <- log(Pgraphs$Total_R+1)
+df_sd <- data_summary(Pgraphs, varname="count.log", groupnames = "district")
+
+p3 <- ggplot(df_sd, aes(x=district, y=count.log, fill = district)) +
+  geom_bar(stat="identity") + theme_classic() +
+  geom_errorbar(aes(ymin=count.log-sd, ymax=count.log+sd), width=.2) +
+  labs(x="", y = "Total nematodes per g dry roots") +
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=16,face="bold"),
         axis.line = element_line(color = "gray40", size = 1, linetype = "solid"),
         axis.ticks.length = unit(5, "pt"),
         axis.title.y = element_text(margin = margin(t = 0, r = 15, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0)),
-        legend.position = "none")
-p3 
-
+        legend.position="none")
+p3
 
 # Nematodes in roots per biogeographic region
-p4 <- ggplot(Pgraphs, aes(x=district, y=Total_S, fill = district)) +
-  geom_boxplot() + theme_classic() + 
-  labs(x="", y = "Nematodes per g dry soil") +
+Pgraphs$count.log <- log(Pgraphs$Total_S+1)
+df_sd <- data_summary(Pgraphs, varname="count.log", groupnames = "district")
+
+p4 <- ggplot(df_sd, aes(x=district, y=count.log, fill = district)) +
+  geom_bar(stat="identity") + theme_classic() +
+  geom_errorbar(aes(ymin=count.log-sd, ymax=count.log+sd), width=.2) +
+  labs(x="", y = "Total nematodes per g dry soil") +
   theme(axis.text=element_text(size=14),
         axis.title=element_text(size=16,face="bold"),
         axis.line = element_line(color = "gray40", size = 1, linetype = "solid"),
         axis.ticks.length = unit(5, "pt"),
         axis.title.y = element_text(margin = margin(t = 0, r = 15, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 15, r = 0, b = 0, l = 0)),
-        legend.position="none") #+ ylim(c(0,30))
-p4 + geom_hline(yintercept=30, linetype="dashed")
+        legend.position="none")
+p4
 
 #####################################################
 
@@ -576,13 +602,21 @@ VP_df$Scale <- factor(VP_df$Scale, levels = c("Small scale", "Large scale"),
                       ordered = TRUE)
 
 # Colours
-gg_color_hue <- function(n) {
-  hues = seq(15, 375, length = n + 1)
-  hcl(h = hues, l = 65, c = 100)[1:n]
-}
-n <- length(components)
-cols <- gg_color_hue(n)
-#cols <- c("coral", "forestgreen", "cyan3", "darkorange3", "grey", "yellow", "brown1")
+# gg_color_hue <- function(n) {
+#   hues = seq(15, 375, length = n + 1)
+#   hcl(h = hues, l = 65, c = 100)[1:n]
+# }
+# n <- length(components)
+# cols <- gg_color_hue(n)
+cols_hold <- viridis(n=7)
+cols <- viridis(n=7)
+cols[1] <- cols_hold[4]
+cols[2] <- cols_hold[1]
+cols[3] <- cols_hold[5]
+cols[4] <- cols_hold[2]
+cols[5] <- cols_hold[6]
+cols[6] <- cols_hold[3]
+cols[7] <- cols_hold[7]
 
 # Plot
 p <- ggplot(data = VP_df, aes(x=species, y=variance, fill=Legend, pattern = Scale)) +
